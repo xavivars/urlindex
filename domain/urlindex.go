@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"github.com/couchbase/vellum"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -13,16 +14,17 @@ import (
 )
 
 type UrlIndex struct {
-	lastUpdate time.Time
-	fst        *vellum.FST
-	remotePath string
-	localPath  string
-	tenant     string
-	locale     string
+	lastUpdate      time.Time
+	fst             *vellum.FST
+	remotePath      string
+	localPath       string
+	tenant          string
+	locale          string
 	defaultResponse bool
+	refreshRate     int
 }
 
-func NewUrlIndex(tenant string, locale string, path string, m int, d bool) (*UrlIndex, error) {
+func NewUrlIndex(path string, m int, d bool) (*UrlIndex, error) {
 
 	tempFilename, err := ioutil.TempFile("", "routes")
 
@@ -32,11 +34,10 @@ func NewUrlIndex(tenant string, locale string, path string, m int, d bool) (*Url
 
 	u := UrlIndex{
 		lastUpdate: time.Now().Add(-time.Hour * 2),
-		tenant:     tenant,
-		locale:     locale,
 		remotePath: path,
 		localPath:  tempFilename.Name(),
 		defaultResponse: d,
+		refreshRate: m,
 	}
 
 	u.Refresh()
@@ -53,14 +54,15 @@ func refresh(u *UrlIndex, m int) {
 
 func (u *UrlIndex) Refresh() bool {
 
-	if u.lastUpdate.Add(time.Minute*2).Before(time.Now()) {
+	if u.lastUpdate.Add(time.Minute * time.Duration(u.refreshRate * 2)).Before(time.Now()) {
 
-		u.DownloadRemoteFile()
+		u.downloadRemoteFile()
 
 		fst, err := vellum.Open(u.remotePath)
 		if err == nil {
-			log.Info("Updated fst")
+			log.Info(fmt.Sprintf("Updated fst: %s", u.remotePath))
 			u.fst = fst
+			u.lastUpdate = time.Now()
 			return true
 		}
 		log.Error(err)
@@ -88,9 +90,9 @@ func isFileRemote(remotePath string) bool {
 	return strings.HasPrefix(remotePath, "http")
 }
 
-func (u *UrlIndex) DownloadRemoteFile() error {
+func (u *UrlIndex) downloadRemoteFile() error {
 
-	data, err := u.GetRemoteData()
+	data, err := u.getRemoteData()
 	if err != nil {
 		return err
 	}
@@ -108,7 +110,7 @@ func (u *UrlIndex) DownloadRemoteFile() error {
 	return out.Close()
 }
 
-func (u *UrlIndex) GetRemoteData() (io.ReadCloser, error) {
+func (u *UrlIndex) getRemoteData() (io.ReadCloser, error) {
 
 	var data io.ReadCloser
 	if isFileRemote(u.remotePath) {

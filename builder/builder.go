@@ -4,26 +4,12 @@ import (
 	"github.com/couchbase/vellum"
 	log "github.com/sirupsen/logrus"
 	"github.com/xavivars/urlindex/builder/list"
-	"github.com/xavivars/urlindex/builder/tlp"
 	"io/ioutil"
 )
 
-const (
-	TLP = "TLP"
-	List = "List"
-)
+func Save(s string) string {
 
-func Save(ft string, t string, l string, s string) string {
-
-	var urls []string
-
-	switch ft {
-		case TLP: urls = tlp.GetUrls(l, s)
-		case List: urls = list.GetUrls(l, s)
-	default:
-		log.Fatal("Invalid format: %s", ft)
-	}
-
+	urls := list.GetUrls(s)
 	filename := getFst(urls)
 
 	return filename

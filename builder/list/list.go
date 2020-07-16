@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-func GetUrls(l string, s string) []string {
+func GetUrls(s string) []string {
 
 	ul := UrlList{ Urls: make([]string, 0)}
 

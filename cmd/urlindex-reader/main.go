@@ -22,7 +22,7 @@ func main() {
 
 	flag.Parse()
 
-	i, err := domain.NewUrlIndex("vistaprint", "en-ie", file, 1, false)
+	i, err := domain.NewUrlIndex(file, 1, false)
 
 	if err != nil {
 		log.Fatal("Could not initialize index")
