@@ -3,20 +3,11 @@ package builder
 import (
 	"github.com/couchbase/vellum"
 	log "github.com/sirupsen/logrus"
-	"github.com/xavivars/urlindex/builder/list"
 	"io/ioutil"
 )
 
-func Save(s string) string {
-
-	urls := list.GetUrls(s)
-	filename := getFst(urls)
-
-	return filename
-}
-
-func getFst(urls []string) string {
-	f, err := ioutil.TempFile("", "example")
+func GetFst(urls []string) string {
+	f, err := ioutil.TempFile("", "fst-")
 	if err != nil {
 		log.Fatal(err)
 	}

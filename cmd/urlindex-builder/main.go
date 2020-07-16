@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/xavivars/urlindex/builder"
+	"github.com/xavivars/urlindex/builder/list"
 	"io/ioutil"
 )
 
@@ -29,8 +30,10 @@ func main() {
 
 	text := getContent(listFile)
 
+	urls := list.GetUrls(text)
+
 	log.Info("About to save")
-	o := builder.Save(text)
+	o := builder.GetFst(urls)
 
 	log.Info(o)
 }
