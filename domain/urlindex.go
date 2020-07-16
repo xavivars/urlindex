@@ -21,10 +21,10 @@ type UrlIndex struct {
 	tenant          string
 	locale          string
 	defaultResponse bool
-	refreshRate     int
+	refreshRate     time.Duration
 }
 
-func NewUrlIndex(path string, m int, d bool) (*UrlIndex, error) {
+func NewUrlIndex(path string, t time.Duration, d bool) (*UrlIndex, error) {
 
 	tempFilename, err := ioutil.TempFile("", "routes")
 
@@ -37,17 +37,17 @@ func NewUrlIndex(path string, m int, d bool) (*UrlIndex, error) {
 		remotePath: path,
 		localPath:  tempFilename.Name(),
 		defaultResponse: d,
-		refreshRate: m,
+		refreshRate: t,
 	}
 
 	u.Refresh()
-	go refresh(&u, m)
+	go refresh(&u, t)
 
 	return &u, nil
 }
 
-func refresh(u *UrlIndex, m int) {
-	for range time.Tick(time.Minute * time.Duration(m)){
+func refresh(u *UrlIndex, t time.Duration) {
+	for range time.Tick(time.Minute * t){
 		u.Refresh()
 	}
 }

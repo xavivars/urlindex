@@ -27,7 +27,7 @@ func main() {
 		return
 	}
 
-	text := getContent(file)
+	text := getContent(listFile)
 
 	log.Info("About to save")
 	o := builder.Save(text)
