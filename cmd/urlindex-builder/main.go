@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/xavivars/urlindex/builder"
 	"github.com/xavivars/urlindex/builder/list"
@@ -24,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	if listFile == "" {
-		fmt.Errorf("list-file is required")
+		log.Error("list-file is required")
 		return
 	}
 

@@ -54,11 +54,11 @@ func refresh(u *UrlIndex, t time.Duration) {
 
 func (u *UrlIndex) Refresh() bool {
 
-	if u.lastUpdate.Add(time.Minute * time.Duration(u.refreshRate * 2)).Before(time.Now()) {
+	if u.lastUpdate.Add(time.Minute * u.refreshRate*2).Before(time.Now()) {
 
 		u.downloadRemoteFile()
 
-		fst, err := vellum.Open(u.remotePath)
+		fst, err := vellum.Open(u.localPath)
 		if err == nil {
 			log.Info(fmt.Sprintf("Updated fst: %s", u.remotePath))
 			u.fst = fst
