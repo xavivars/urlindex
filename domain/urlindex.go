@@ -41,20 +41,20 @@ func NewUrlIndex(path string, t time.Duration, d bool) (*UrlIndex, error) {
 	}
 
 	u.Refresh()
-	go refresh(&u, t)
+	go refresh(&u)
 
 	return &u, nil
 }
 
-func refresh(u *UrlIndex, t time.Duration) {
-	for range time.Tick(time.Minute * t){
+func refresh(u *UrlIndex) {
+	for range time.Tick(time.Minute){
 		u.Refresh()
 	}
 }
 
 func (u *UrlIndex) Refresh() bool {
 
-	if u.lastUpdate.Add(time.Minute * u.refreshRate*2).Before(time.Now()) {
+	if u.lastUpdate.Add(time.Minute * u.refreshRate).Before(time.Now()) {
 
 		u.downloadRemoteFile()
 
