@@ -29,5 +29,10 @@ func GetFst(urls []string) string {
 		log.Fatal(err)
 	}
 
+	err = f.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return f.Name()
 }
