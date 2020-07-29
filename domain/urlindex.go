@@ -114,7 +114,7 @@ func (u *UrlIndex) getRemoteData() (io.ReadCloser, error) {
 
 	var data io.ReadCloser
 	if isFileRemote(u.remotePath) {
-		resp, err := http.Get(u.remotePath)
+		resp, err := get(u.remotePath)
 		if err != nil {
 			return nil, err
 		}
@@ -133,3 +133,16 @@ func (u *UrlIndex) getRemoteData() (io.ReadCloser, error) {
 	return data, nil
 }
 
+func get(url string) (*http.Response, error) {
+	client := &http.Client{ }
+
+	req, _ := http.NewRequest("GET", url, nil)
+
+	h := fmt.Sprintf("X-%s", time.Now().Format(time.RFC3339))
+
+	// Try to avoid caches by varying headers
+	req.Header.Add("Origin", h)
+	req.Header.Add("Access-Control-Request-Headers", h)
+
+	return client.Do(req)
+}
