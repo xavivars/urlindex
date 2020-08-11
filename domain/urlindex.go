@@ -17,7 +17,6 @@ type UrlIndex struct {
 	lastUpdate      time.Time
 	fst             *vellum.FST
 	remotePath      string
-	localPath       string
 	tenant          string
 	locale          string
 	defaultResponse bool
@@ -26,21 +25,18 @@ type UrlIndex struct {
 
 func NewUrlIndex(path string, t time.Duration, d bool) (*UrlIndex, error) {
 
-	tempFilename, err := ioutil.TempFile("", "routes")
-
-	if err != nil {
-		return nil, err
-	}
-
 	u := UrlIndex{
 		lastUpdate: time.Now().Add(-time.Hour * 2),
 		remotePath: path,
-		localPath:  tempFilename.Name(),
 		defaultResponse: d,
 		refreshRate: t,
 	}
 
-	u.Refresh()
+	_, err := u.Refresh()
+	if err != nil {
+		return nil, err
+	}
+
 	go refresh(&u)
 
 	return &u, nil
@@ -48,27 +44,37 @@ func NewUrlIndex(path string, t time.Duration, d bool) (*UrlIndex, error) {
 
 func refresh(u *UrlIndex) {
 	for range time.Tick(time.Minute){
-		u.Refresh()
+		_, _ = u.Refresh()
 	}
 }
 
-func (u *UrlIndex) Refresh() bool {
+func (u *UrlIndex) Refresh() (bool, error) {
 
 	if u.lastUpdate.Before(time.Now().Add(-u.refreshRate)) {
 		log.Info(fmt.Sprintf("Updating fst: %s", u.remotePath))
-		u.downloadRemoteFile()
+		p, err := u.downloadRemoteFile()
 
-		fst, err := vellum.Open(u.localPath)
+		if err != nil {
+			return false, err
+		}
+
+		fst, err := vellum.Open(p)
 		if err == nil {
+
+			oldFst := u.fst
+
 			log.Info(fmt.Sprintf("Updated fst: %s", u.remotePath))
 			u.fst = fst
 			u.lastUpdate = time.Now()
-			return true
+
+			oldFst.Close()
+
+			return true, nil
 		}
 		log.Error(err)
 	}
 
-	return false
+	return false, nil
 }
 
 func (u *UrlIndex) Exists(s string) bool {
@@ -90,24 +96,22 @@ func isFileRemote(remotePath string) bool {
 	return strings.HasPrefix(remotePath, "http")
 }
 
-func (u *UrlIndex) downloadRemoteFile() error {
+func (u *UrlIndex) downloadRemoteFile() (string, error) {
+	tempFile, err := ioutil.TempFile("", "routes")
+	fileName := tempFile.Name()
 
 	data, err := u.getRemoteData()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer data.Close()
-	out, err := os.Create(u.localPath)
-	if err != nil {
-		return err
+
+	if _, err = io.Copy(tempFile, data); err != nil {
+		tempFile.Close()
+		return "", err
 	}
 
-	if _, err = io.Copy(out, data); err != nil {
-		out.Close()
-		return err
-	}
-
-	return out.Close()
+	return fileName, tempFile.Close()
 }
 
 func (u *UrlIndex) getRemoteData() (io.ReadCloser, error) {
