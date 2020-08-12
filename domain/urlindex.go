@@ -21,6 +21,7 @@ type UrlIndex struct {
 	locale          string
 	defaultResponse bool
 	refreshRate     time.Duration
+	localPath		string
 }
 
 func NewUrlIndex(path string, t time.Duration, d bool) (*UrlIndex, error) {
@@ -62,12 +63,18 @@ func (u *UrlIndex) Refresh() (bool, error) {
 		if err == nil {
 
 			oldFst := u.fst
+			localPath := u.localPath
 
 			log.Info(fmt.Sprintf("Updated fst: %s", u.remotePath))
 			u.fst = fst
+			u.localPath = p
 			u.lastUpdate = time.Now()
 
-			oldFst.Close()
+			if oldFst != nil {
+				oldFst.Close()
+				os.Remove(localPath)
+				log.Info(fmt.Sprintf("Temp file %s deleted", localPath))
+			}
 
 			return true, nil
 		}
