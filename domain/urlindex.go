@@ -149,7 +149,7 @@ func get(url string) (*http.Response, error) {
 
 	req, _ := http.NewRequest("GET", url, nil)
 
-	h := fmt.Sprintf("X-%s", time.Now().Format(time.RFC3339))
+	h := fmt.Sprintf("X-%d", time.Now().Unix())
 
 	// Try to avoid caches by varying headers
 	req.Header.Add("Origin", h)
